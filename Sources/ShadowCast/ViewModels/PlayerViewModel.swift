@@ -21,6 +21,7 @@ final class PlayerViewModel {
     private(set) var currentWordIndex: Int = -1
     var isPlaying: Bool = false
     var playbackRate: Float = 1.0
+    private(set) var playerFailed: Bool = false  // true when video file missing/unreadable
     private(set) var transcript: TranscriptDocument?
     @ObservationIgnored private var words: [WordTiming]
     @ObservationIgnored private var statusCancellable: AnyCancellable?
@@ -47,8 +48,12 @@ final class PlayerViewModel {
 
         self.statusCancellable = item.publisher(for: \.status)
             .receive(on: DispatchQueue.main)
-            .sink { [weak avPlayer] status in
-                if status == .failed { avPlayer?.pause() }
+            .sink { [weak self] status in
+                if status == .failed {
+                    self?.player.pause()
+                    self?.isPlaying = false
+                    self?.playerFailed = true
+                }
             }
 
         // COMMON-1: [weak self] prevents retain cycle

@@ -11,8 +11,23 @@ struct PlayerView: View {
         GeometryReader { geo in
             VStack(spacing: 0) {
                 // Video: 75% of height
-                AVPlayerWrapper(player: viewModel.player)
-                    .frame(height: geo.size.height * 0.75)
+                Group {
+                    if viewModel.playerFailed {
+                        VStack(spacing: 12) {
+                            Image(systemName: "exclamationmark.triangle")
+                                .font(.system(size: 40)).foregroundStyle(.orange)
+                            Text("Video file unavailable")
+                                .font(.headline)
+                            Text("The converted MP4 was removed from cache.\nClick the video again in the sidebar to reconvert.")
+                                .font(.callout).foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        AVPlayerWrapper(player: viewModel.player)
+                    }
+                }
+                .frame(height: geo.size.height * 0.75)
 
                 Divider()
 
