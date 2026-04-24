@@ -15,60 +15,90 @@ struct VideoLibraryView: View {
                 List(appViewModel.videoFiles, selection: $vm.selectedVideoID) { file in
                     VideoFileRow(file: file)
                         .tag(file.id)
+                        .listRowBackground(
+                            vm.selectedVideoID == file.id
+                                ? CP.bgSelected
+                                : Color.clear
+                        )
+                        .listRowSeparator(.hidden)
                 }
                 .listStyle(.sidebar)
+                .scrollContentBackground(.hidden)
+                .background(CP.bg)
                 .safeAreaInset(edge: .bottom) {
                     ModelDownloadView()
-                        .background(.bar)
+                        .background(CP.bgPanel)
                 }
             }
         }
-        .navigationTitle("Videos")
+        .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     appViewModel.selectFolder()
                 } label: {
-                    Label("Choose Folder", systemImage: "folder.badge.plus")
+                    HStack(spacing: 4) {
+                        Image(systemName: "folder.badge.plus")
+                        Text("LOAD DIR")
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    }
                 }
+                .buttonStyle(CyberpunkButtonStyle(color: CP.cyan))
                 .help("Select a folder to watch for video files")
             }
         }
     }
 
     private var noFolderSelectedView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "folder.badge.questionmark")
-                .font(.system(size: 40))
-                .foregroundStyle(.secondary)
-            Text("No Folder Selected")
-                .font(.headline)
-            Text("Choose a folder containing your video files")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            Button("Choose Folder") {
-                appViewModel.selectFolder()
+        ZStack {
+            CP.bg
+            VStack(spacing: 16) {
+                Text("⬡")
+                    .font(.system(size: 48, design: .monospaced))
+                    .foregroundStyle(CP.cyan)
+                    .neonGlow(CP.cyan, radius: 8)
+
+                Text("NO DIRECTORY LOADED")
+                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+                    .foregroundStyle(CP.cyan)
+                    .tracking(2)
+
+                Text("select a folder containing\nyour audio logs")
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(CP.dim)
+                    .multilineTextAlignment(.center)
+
+                Button("LOAD DIRECTORY") { appViewModel.selectFolder() }
+                    .buttonStyle(CyberpunkButtonStyle(color: CP.cyan))
             }
-            .buttonStyle(.borderedProminent)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var noVideoFilesView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "film.stack")
-                .font(.system(size: 40))
-                .foregroundStyle(.secondary)
-            Text("No Video Files Found")
-                .font(.headline)
-            if let folderName = appViewModel.watchedFolderURL?.lastPathComponent {
-                Text("No video files found in \"\(folderName)\"")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+        ZStack {
+            CP.bg
+            VStack(spacing: 12) {
+                Text("▣")
+                    .font(.system(size: 40, design: .monospaced))
+                    .foregroundStyle(CP.dim)
+
+                Text("NO FILES FOUND")
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .foregroundStyle(CP.dim)
+                    .tracking(2)
+
+                if let folderName = appViewModel.watchedFolderURL?.lastPathComponent {
+                    Text("/\(folderName.uppercased())")
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundStyle(CP.dimmer)
+                        .lineLimit(1)
+                }
+
+                Text("SUPPORTED: MP4  MOV  MKV")
+                    .font(.system(size: 9, design: .monospaced))
+                    .foregroundStyle(CP.dimmer)
             }
-            Text("Supported formats: MP4, MOV, MKV")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

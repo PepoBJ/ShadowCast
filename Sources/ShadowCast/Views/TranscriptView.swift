@@ -40,6 +40,8 @@ struct TranscriptView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
             }
+            .background(CP.bg)
+            .scrollContentBackground(.hidden)
             .onChange(of: activeSegmentIndex) { _, segIdx in
                 withAnimation(.easeInOut(duration: 0.15)) {
                     proxy.scrollTo(segIdx, anchor: .top)
@@ -58,38 +60,44 @@ private struct SegmentLineView: View {
     @State private var hovered = false
 
     var body: some View {
+        let isSegmentActive = currentWordIndex >= globalOffset &&
+                              currentWordIndex < globalOffset + segment.words.count
+
         HStack(alignment: .firstTextBaseline, spacing: 10) {
-            // Timestamp — subtle, fixed width
+            // Timestamp — neon cyan monospace
             Text(formatTime(segment.start))
-                .font(.system(size: 13, design: .monospaced))
-                .foregroundStyle(.tertiary)
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundStyle(isSegmentActive ? CP.cyan : CP.dimmer)
                 .frame(width: 36, alignment: .trailing)
 
             // Words flow
-            FlowLayout(spacing: 2) {
+            FlowLayout(spacing: 3) {
                 ForEach(Array(segment.words.enumerated()), id: \.offset) { wordIdx, word in
                     let globalIdx = globalOffset + wordIdx
                     let isActive = globalIdx == currentWordIndex
                     Text(word.word)
-                        .font(.system(size: 16))
-                        .padding(.horizontal, 2)
-                        .padding(.vertical, 1)
-                        .background(isActive ? Color.yellow.opacity(0.5) : Color.clear)
-                        .cornerRadius(3)
+                        .font(.system(size: 15, design: .monospaced))
+                        .foregroundStyle(isActive ? CP.bg : Color.white.opacity(0.85))
+                        .padding(.horizontal, 3)
+                        .padding(.vertical, 2)
+                        .background(isActive ? CP.yellow : Color.clear)
+                        .cornerRadius(2)
+                        .shadow(color: isActive ? CP.yellow.opacity(0.8) : .clear, radius: 4)
                         .onTapGesture { onWordTap(word.start) }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 4)
-        .background(
-            currentWordIndex >= globalOffset &&
-            currentWordIndex < globalOffset + segment.words.count
-                ? Color.primary.opacity(0.05)
-                : Color.clear
+        .padding(.vertical, 5)
+        .padding(.horizontal, 6)
+        .background(isSegmentActive ? CP.cyan.opacity(0.06) : Color.clear)
+        .overlay(
+            isSegmentActive
+                ? Rectangle().frame(width: 2).foregroundStyle(CP.cyan).neonGlow(CP.cyan, radius: 3)
+                : nil,
+            alignment: .leading
         )
-        .cornerRadius(4)
+        .cornerRadius(3)
     }
 
     private func formatTime(_ seconds: Double) -> String {
