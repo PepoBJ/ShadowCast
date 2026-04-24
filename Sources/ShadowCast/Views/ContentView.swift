@@ -9,8 +9,9 @@ struct ContentView: View {
             VideoLibraryView()
         } detail: {
             if let playerVM = appViewModel.playerViewModel,
-               appViewModel.selectedVideoID != nil {
+               let selectedID = appViewModel.selectedVideoID {
                 PlayerView(viewModel: playerVM)
+                    .id(selectedID)  // force full recreation on video change
             } else if let id = appViewModel.selectedVideoID,
                       let file = appViewModel.videoFiles.first(where: { $0.id == id }) {
                 VStack(spacing: 12) {
