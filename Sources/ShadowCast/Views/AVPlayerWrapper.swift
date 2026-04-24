@@ -21,6 +21,10 @@ struct AVPlayerWrapper: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: AVPlayerView, context: Context) {
-        // Intentionally empty — player is set once in makeNSView (COMMON-2)
+        // Only update when the player instance actually changes (different video selected).
+        // Guarding by identity prevents the seek-order bug from re-assigning mid-playback.
+        if nsView.player !== player {
+            nsView.player = player
+        }
     }
 }
