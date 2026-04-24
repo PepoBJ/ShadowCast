@@ -25,6 +25,7 @@ struct PlayerView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         AVPlayerWrapper(player: viewModel.player)
+                            .id(ObjectIdentifier(viewModel.player))
                     }
                 }
                 .frame(height: geo.size.height * 0.75)
