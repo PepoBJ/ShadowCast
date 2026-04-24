@@ -1,5 +1,7 @@
 import SwiftUI
 
+/// Shown in the transcript pane when no transcript is loaded.
+/// Displays live transcription progress if a job is running for the selected video.
 struct TranscriptStatusView: View {
     @Environment(AppViewModel.self) private var appViewModel
     @State private var elapsed: TimeInterval = 0
@@ -16,50 +18,55 @@ struct TranscriptStatusView: View {
     }
 
     var body: some View {
-        ZStack {
-            CP.bg
-            VStack(spacing: 14) {
-                switch status {
-                case .remuxing:
-                    cpSpinner(color: CP.yellow)
-                    cpLabel("CONVERTING MKV → MP4", color: CP.yellow)
-                    cpSub("stream copy · lossless · fast")
-                    cpTimer(elapsed)
+        VStack(spacing: 16) {
+            switch status {
+            case .remuxing:
+                ProgressView()
+                Text("Converting MKV to MP4…")
+                    .font(.headline)
+                Text("Stream copy — fast, lossless")
+                    .font(.caption).foregroundStyle(.secondary)
+                Text(formatElapsed(elapsed)).monospacedDigit()
+                    .font(.caption).foregroundStyle(.tertiary)
 
-                case .inProgress(let phase, let segments, _):
-                    cpSpinner(color: CP.magenta)
-                    cpLabel(phase.uppercased().replacingOccurrences(of: "…", with: ""), color: CP.magenta)
-                    if segments > 0 {
-                        cpSub("\(segments) SEGMENTS DECODED")
-                    }
-                    cpTimer(elapsed)
+            case .inProgress(let phase, let segments, _):
+                ProgressView()
+                Text(phase)
+                    .font(.headline)
+                if segments > 0 {
+                    Text("\(segments) segments processed")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Text(formatElapsed(elapsed)).monospacedDigit()
+                    .font(.caption).foregroundStyle(.tertiary)
 
-                case .queued:
-                    Text("⏳").font(.system(size: 28)).foregroundStyle(CP.cyan)
-                    cpLabel("QUEUED", color: CP.cyan)
+            case .queued:
+                Image(systemName: "clock")
+                    .font(.system(size: 32)).foregroundStyle(.secondary)
+                Text("Queued for transcription")
+                    .font(.headline)
 
-                case .failed(let msg):
-                    Text("⚠").font(.system(size: 28)).foregroundStyle(CP.red).neonGlow(CP.red)
-                    cpLabel("PROCESS FAILED", color: CP.red)
-                    Text(msg)
-                        .font(.system(size: 10, design: .monospaced))
-                        .foregroundStyle(CP.dim)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                    if let file = selectedFile {
-                        Button("RETRY") { appViewModel.transcribe(file: file) }
-                            .buttonStyle(CyberpunkButtonStyle(color: CP.red))
-                    }
+            case .failed(let msg):
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 32)).foregroundStyle(.red)
+                Text("Transcription failed")
+                    .font(.headline)
+                Text(msg)
+                    .font(.caption).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                if let file = selectedFile {
+                    Button("Retry") { appViewModel.transcribe(file: file) }
+                        .buttonStyle(.borderedProminent)
+                }
 
-                default:
-                    Text("◈")
-                        .font(.system(size: 32, design: .monospaced))
-                        .foregroundStyle(CP.border)
-                    cpLabel("NO TRANSCRIPT", color: CP.dim)
-                    if let file = selectedFile, !file.isMKV || file.isReadyForPlayback {
-                        Button("TRANSCRIBE") { appViewModel.transcribe(file: file) }
-                            .buttonStyle(CyberpunkButtonStyle(color: CP.cyan))
-                    }
+            default:
+                Image(systemName: "text.alignleft")
+                    .font(.system(size: 32)).foregroundStyle(.secondary)
+                Text("No transcript")
+                    .font(.headline)
+                if let file = selectedFile, !file.isMKV || file.isReadyForPlayback {
+                    Button("Transcribe") { appViewModel.transcribe(file: file) }
+                        .buttonStyle(.borderedProminent)
                 }
             }
         }
@@ -86,34 +93,7 @@ struct TranscriptStatusView: View {
         }
     }
 
-    @ViewBuilder
-    private func cpSpinner(color: Color) -> some View {
-        ProgressView()
-            .tint(color)
-            .scaleEffect(1.2)
-    }
-
-    @ViewBuilder
-    private func cpLabel(_ text: String, color: Color) -> some View {
-        Text(text)
-            .font(.system(size: 12, weight: .bold, design: .monospaced))
-            .foregroundStyle(color)
-            .neonGlow(color, radius: 3)
-            .tracking(2)
-    }
-
-    @ViewBuilder
-    private func cpSub(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: 10, design: .monospaced))
-            .foregroundStyle(CP.dim)
-    }
-
-    @ViewBuilder
-    private func cpTimer(_ t: TimeInterval) -> some View {
-        Text(String(format: "%d:%02d", Int(t)/60, Int(t)%60))
-            .font(.system(size: 18, weight: .light, design: .monospaced))
-            .foregroundStyle(CP.dimmer)
-            .monospacedDigit()
+    private func formatElapsed(_ t: TimeInterval) -> String {
+        String(format: "%d:%02d", Int(t)/60, Int(t)%60)
     }
 }
